@@ -575,22 +575,12 @@ Ocr.Entry = function(config){
   
     // store information for undo/redo
     this.undo = new Array();
-    // for (var i=0; i< this.nLine; i++)
-    //     this.undo[i] = new Array();
     this.undoData = new Array();
-    // for (var i=0; i< this.nLine; i++)
-    //     this.undoData[i] = new Array();
-
    
     //store redo data
     this.redo = new Array();
-    // for (var i=0; i< this.nLine; i++)
-    //     this.redo[i] = new Array();
-
     this.redoData = new Array();
-    // for (var i=0; i< this.nLine; i++)
-    //     this.redoData[i] = new Array();
-
+  
    
     //luu tru gioi han cua net chu tam thoi
     this.left =0;
@@ -997,8 +987,6 @@ Ocr.Entry.prototype.addEvent = function(){
         this.enable();
  }
 Ocr.Entry.prototype.clear = function(){
-    this.context.fillStyle="#000";
-    this.context.fillRect(0,0,this.width, this.height);
     this.context.clearRect(0,0, this.width, this.height);
       this.context.fillStyle="rgba(0,0,0,0)";
     this._target.value = "";
@@ -1051,14 +1039,14 @@ Ocr.Entry.prototype.getData = function(x, y, width, height){
     var out = this.normalize(input);
     
     
-    var s = "";
+   /* var s = "";
     for (var i=0; i<out.length; i++) {
         for (var j=0; j< out[0].length; j++){
             s +=( out[i][j] == 0 ? "0" : "1");
 
         }
     }
-    console.log(s);
+    console.log(s);*/
 
     return out;
    
@@ -1066,34 +1054,39 @@ Ocr.Entry.prototype.getData = function(x, y, width, height){
 Ocr.Entry.prototype.addChar = function(xL, yT, xR, yB){
     var t = {x: xL, y: yT, w: xR- xL +1, h: yB -yT +1};
     var x, y, w, h;
-    //var chr = this.getData(this.left, this.top, this.right-this.left+1, this.bottom-this.top+1);
-    //var collide = false;
+    var targetLine = -1;
     var that = this;
-    var line = Math.floor((yT+yB)*0.5/(this.height/this.nLine));
-    //alert(line);
-    var rIn=this.input[line];
-    var rOut = this.output[line];
-    for (var i= rIn.length-1; i>=0; i--){
-      
-        if ( rIn[i]!= null && this.collide(t, rIn[i], i)){
-            x = rIn[i].x < t.x ? rIn[i].x : t.x;
-            y = rIn[i].y < t.y ? rIn[i].y : t.y;
-            w = rIn[i].x + rIn[i].w > t.x + t.w ? rIn[i].x + rIn[i].w -x +1: t.x + t.w - x+1;
-            h = rIn[i].y + rIn[i].h > t.y + t.h ? rIn[i].y + rIn[i].h -y +1: t.y + t.h - y+1;        
-            
-            t.x = x;
-            t.y = y;
-            t.w = w;
-            t.h = h;
-            //console.log("after : "+ t.x +"," + t.y + "," + t.w + "," + t.h);
-            rIn.splice(i, 1);
-            rOut.splice(i,1);
+    for (var r =0; r < this.nLine; r++){
+        //var line = Math.floor((yT+yB)*0.5/(this.height/this.nLine));
+        var line = r;
+        //alert(line);
+        var rIn=this.input[line];
+        var rOut = this.output[line];
+        for (var i= rIn.length-1; i>=0; i--){
           
-           
+            if ( rIn[i]!= null && this.collide(t, rIn[i], i)){
+                targetLine = line;
+                x = rIn[i].x < t.x ? rIn[i].x : t.x;
+                y = rIn[i].y < t.y ? rIn[i].y : t.y;
+                w = rIn[i].x + rIn[i].w > t.x + t.w ? rIn[i].x + rIn[i].w -x +1: t.x + t.w - x+1;
+                h = rIn[i].y + rIn[i].h > t.y + t.h ? rIn[i].y + rIn[i].h -y +1: t.y + t.h - y+1;        
+                
+                t.x = x;
+                t.y = y;
+                t.w = w;
+                t.h = h;
+                //console.log("after : "+ t.x +"," + t.y + "," + t.w + "," + t.h);
+                rIn.splice(i, 1);
+                rOut.splice(i,1);
+              
+               
+            }
         }
     }
     chr = this.getData(t.x, t.y, t.w, t.h);
-    this.put(line,chr,t);
+    if (targetLine == -1)
+        targetLine = Math.floor((yT+yB)*0.5/(this.height/this.nLine));
+    this.put(targetLine,chr,t);
 
     this.undo.push(this.copy(this.input));
     var newData = this.canvas.toDataURL("image/png"); //--> url anh luu tru canvas
@@ -1250,12 +1243,14 @@ Ocr.Entry.prototype.undoText= function(){
     var that = this;
     if (this.undo.length == 0) {   
         if (!that.cleared) {
+            this.context.clearRect(0,0, this.width, this.height);
             this.context.fillStyle="rgba(0,0,0,0)";
-            this.context.fillRect(0,0, this.width, this.height);
             this._target.value = "";
             this.showGuide();
             this.cleared = true;
             this.r = true;
+   
+   
         }
         return;
     }
@@ -1268,9 +1263,6 @@ Ocr.Entry.prototype.undoText= function(){
     }
     if (this.undo.length == 0) {   
         if (!this.cleared) {
-          //  alert("clear");  
-            this.context.fillStyle="#000";
-            this.context.fillRect(0,0,this.width, this.height);   
             this.context.clearRect(0,0, this.width, this.height);
               this.context.fillStyle="rgba(0,0,0,0)";
             this._target.value = "";
@@ -1293,9 +1285,7 @@ Ocr.Entry.prototype.undoText= function(){
     img.src = src;
    // alert(this.input.length);
     var that = this;
-    img.onload = function(){
-        that.context.fillStyle="#000";
-        that.context.fillRect(0,0,this.width, this.height);   
+    img.onload = function(){   
         that.context.clearRect(0, 0, that.canvas.width, that.canvas.height);
         that.context.drawImage(img, 0, 0, that.canvas.width, that.canvas.height);
         that.context.fillStyle="rgba(0,0,0,0)";
