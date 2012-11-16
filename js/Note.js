@@ -61,7 +61,6 @@ function NoteBoard(id,cvId){
     });
 }
 NoteBoard.prototype.enable = function(){
-	//alert("en");
 	this.enabled = true;
 };
 NoteBoard.prototype.disable = function(){
@@ -81,15 +80,20 @@ NoteBoard.prototype.delNote = function(note) {
 NoteBoard.prototype.edit = function(note){
 	this.target = note;
 	this.entry.clear();
+	var entry = this.entry;
 	if (note.data != null && note.img != null) {
-		this.entry.input = note.data;
+		entry.input = note.data;
+
 		var ct = this.entry.context;
 		ct.clearRect(0, 0, this.entry.width, this.entry.height);
 		var img = new Image();
 		img.src=note.img;
 		ct.drawImage(img,0, 0);
-		this.entry.update();
-		this.entry._target.value = note.text;
+
+		entry.undo.push(entry.copy(entry.input));
+	    entry.undoData.push(note.img);
+		entry.update();
+		entry._target.value = note.text;
 	}
 
 	$("#wrap").show();
